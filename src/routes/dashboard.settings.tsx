@@ -9,7 +9,7 @@ function Settings() {
   return (
     <DashboardLayout title="Settings" subtitle="Manage your canteen profile and preferences">
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl bg-card p-6 shadow-soft">
+        <div className="lg:col-span-2 rounded-2xl bg-card p-6 shadow-soft border border-border">
           <h3 className="font-display font-bold mb-4">Canteen Profile</h3>
           <div className="space-y-3">
             <Field label="Canteen Name" value="A-Block Canteen" />

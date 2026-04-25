@@ -19,7 +19,7 @@ function Analytics() {
         <StatCard label="Unique Customers" value={612} icon={Users} change={11} variant="light" />
       </div>
 
-      <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft">
+      <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft border border-border">
         <h3 className="font-display font-bold mb-4">Revenue Trend</h3>
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={dailySales}>
@@ -38,7 +38,7 @@ function Analytics() {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-4 rounded-2xl bg-card p-5 shadow-soft">
+      <div className="mt-4 rounded-2xl bg-card p-5 shadow-soft border border-border">
         <h3 className="font-display font-bold mb-4">Orders per Day</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={dailySales}>

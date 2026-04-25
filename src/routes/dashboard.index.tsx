@@ -120,7 +120,7 @@ function ChartCard({ title, subtitle, children, className = "" }: { title: strin
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-      className={`rounded-2xl bg-card p-5 shadow-soft ${className}`}
+      className={`rounded-2xl bg-card p-5 shadow-soft border border-border ${className}`}
     >
       <div className="flex items-center justify-between mb-4">
         <div>

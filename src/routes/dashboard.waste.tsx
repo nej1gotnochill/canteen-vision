@@ -34,7 +34,7 @@ function Waste() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl bg-card p-5 shadow-soft">
+        <div className="lg:col-span-2 rounded-2xl bg-card p-5 shadow-soft border border-border">
           <h3 className="font-display font-bold mb-4">Weekly Waste (kg)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={weeklyWaste}>
@@ -69,7 +69,7 @@ function Waste() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft">
+      <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft border border-border">
         <h3 className="font-display font-bold mb-4">Wasted / Expired Items</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {wastedItems.map((it, i) => (

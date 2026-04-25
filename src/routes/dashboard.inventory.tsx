@@ -32,7 +32,7 @@ function Inventory() {
             key={p.id}
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
             whileHover={{ y: -4 }}
-            className="relative rounded-2xl bg-card p-5 shadow-soft"
+            className="relative rounded-2xl bg-card p-5 shadow-soft border border-border"
           >
             {p.low && (
               <span className="absolute top-3 right-3 rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Low Stock</span>
@@ -72,7 +72,7 @@ function Inventory() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl bg-card p-6 shadow-card"
+              className="w-full max-w-md rounded-2xl bg-card p-6 shadow-card border border-border"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-display text-xl font-bold">Add New Item</h3>

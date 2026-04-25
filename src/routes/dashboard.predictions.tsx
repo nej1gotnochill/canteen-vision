@@ -37,7 +37,7 @@ function Predictions() {
             key={p.item}
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             whileHover={{ y: -4 }}
-            className="rounded-2xl bg-card p-5 shadow-soft"
+            className="rounded-2xl bg-card p-5 shadow-soft border border-border"
           >
             <div className="flex items-start justify-between">
               <div className="text-4xl">{p.emoji}</div>
@@ -62,7 +62,7 @@ function Predictions() {
         ))}
       </div>
 
-      <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft">
+      <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft border border-border">
         <h3 className="font-display font-bold mb-4">7-Day Forecast Trend</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={dailySales}>

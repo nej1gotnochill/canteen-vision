@@ -142,7 +142,7 @@ function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="rounded-2xl bg-card p-6 shadow-soft"
+                className="rounded-2xl bg-card p-6 shadow-soft border border-border"
               >
                 <div className="flex gap-0.5 text-accent">
                   {Array.from({ length: 5 }).map((_, k) => <Star key={k} className="h-4 w-4 fill-accent" />)}

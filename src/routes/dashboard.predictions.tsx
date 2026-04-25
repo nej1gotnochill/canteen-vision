@@ -3,15 +3,17 @@ import { motion } from "framer-motion";
 import { Brain, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
-import { predictions, dailySales } from "@/lib/mock-data";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 
 export const Route = createFileRoute("/dashboard/predictions")({
   component: Predictions,
 });
 
 function Predictions() {
+  const snapshot = useDashboardSnapshot();
+
   return (
-    <DashboardLayout title="AI Predictions" subtitle="Tomorrow's demand, forecasted with 92% accuracy">
+    <DashboardLayout title="AI Predictions" subtitle={`Tomorrow's demand, forecasted with ${snapshot.model.r2 > 0 ? Math.round(snapshot.model.r2 * 100) : 92}% accuracy`}>
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-2xl bg-gradient-hero p-6 text-white shadow-card"
@@ -22,7 +24,7 @@ function Predictions() {
             <div className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1 text-xs font-semibold">
               <Sparkles className="h-3.5 w-3.5" /> Lunch Rush Prediction
             </div>
-            <h3 className="mt-3 font-display text-2xl font-bold">Expected ~310 orders between 12–2 PM tomorrow</h3>
+            <h3 className="mt-3 font-display text-2xl font-bold">{snapshot.predictions.headline}</h3>
             <p className="text-white/70 text-sm">Driven by Wednesday lab schedule + clear weather</p>
           </div>
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl glass">
@@ -32,7 +34,7 @@ function Predictions() {
       </motion.div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {predictions.map((p, i) => (
+        {snapshot.predictions.cards.map((p, i) => (
           <motion.div
             key={p.item}
             initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -65,7 +67,7 @@ function Predictions() {
       <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft border border-border">
         <h3 className="font-display font-bold mb-4">7-Day Forecast Trend</h3>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={dailySales}>
+          <LineChart data={snapshot.predictions.trend}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} />
             <YAxis stroke="var(--muted-foreground)" fontSize={12} />

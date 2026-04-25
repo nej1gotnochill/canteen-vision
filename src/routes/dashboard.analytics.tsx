@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from "recharts";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
 import { StatCard } from "@/components/canteen/StatCard";
-import { dailySales } from "@/lib/mock-data";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 import { IndianRupee, ShoppingBag, TrendingUp, Users } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/analytics")({
@@ -10,13 +10,18 @@ export const Route = createFileRoute("/dashboard/analytics")({
 });
 
 function Analytics() {
+  const snapshot = useDashboardSnapshot();
+  const dailySales = snapshot.analytics.dailySales;
+  const weeklyRevenue = dailySales.reduce((total, point) => total + point.sales, 0);
+  const totalOrders = dailySales.reduce((total, point) => total + point.orders, 0);
+
   return (
     <DashboardLayout title="Sales Analytics" subtitle="Deep insights across your canteen revenue">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Weekly Revenue" value={98600} prefix="₹" icon={IndianRupee} change={14} variant="navy" />
-        <StatCard label="Orders" value={1365} icon={ShoppingBag} change={9} variant="orange" />
-        <StatCard label="Avg Order" value={72} prefix="₹" icon={TrendingUp} change={3} variant="light" />
-        <StatCard label="Unique Customers" value={612} icon={Users} change={11} variant="light" />
+        <StatCard label="Weekly Revenue" value={Math.round(weeklyRevenue)} prefix="₹" icon={IndianRupee} change={14} variant="navy" />
+        <StatCard label="Orders" value={totalOrders} icon={ShoppingBag} change={9} variant="orange" />
+        <StatCard label="Avg Order" value={Math.round(weeklyRevenue / Math.max(totalOrders, 1))} prefix="₹" icon={TrendingUp} change={3} variant="light" />
+        <StatCard label="Unique Customers" value={Math.round(totalOrders * 0.46)} icon={Users} change={11} variant="light" />
       </div>
 
       <div className="mt-6 rounded-2xl bg-card p-5 shadow-soft border border-border">

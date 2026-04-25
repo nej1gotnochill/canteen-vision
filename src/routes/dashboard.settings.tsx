@@ -1,21 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 
 export const Route = createFileRoute("/dashboard/settings")({
   component: Settings,
 });
 
 function Settings() {
+  const snapshot = useDashboardSnapshot();
+
   return (
     <DashboardLayout title="Settings" subtitle="Manage your canteen profile and preferences">
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-2xl bg-card p-6 shadow-soft border border-border">
           <h3 className="font-display font-bold mb-4">Canteen Profile</h3>
           <div className="space-y-3">
-            <Field label="Canteen Name" value="A-Block Canteen" />
-            <Field label="Owner" value="Aman Sharma" />
-            <Field label="Location" value="Thapar University, Patiala" />
-            <Field label="Operating Hours" value="8:00 AM – 10:00 PM" />
+            <Field label="Canteen Name" value={snapshot.settings.canteenName} />
+            <Field label="Owner" value={snapshot.settings.owner} />
+            <Field label="Location" value={snapshot.settings.location} />
+            <Field label="Operating Hours" value={snapshot.settings.operatingHours} />
           </div>
           <button className="mt-5 rounded-xl bg-gradient-orange px-5 py-2.5 text-sm font-semibold text-white shadow-glow">Save Changes</button>
         </div>
@@ -24,7 +27,7 @@ function Settings() {
           <div className="relative">
             <h3 className="font-display font-bold mb-2">Pro Plan</h3>
             <p className="text-sm text-white/70">Unlock unlimited AI predictions and waste tracking.</p>
-            <p className="mt-6 font-display text-3xl font-bold">₹999<span className="text-sm text-white/60">/mo</span></p>
+            <p className="mt-6 font-display text-3xl font-bold">₹{snapshot.settings.planPrice}<span className="text-sm text-white/60">/mo</span></p>
             <button className="mt-4 w-full rounded-xl bg-accent py-2.5 text-sm font-semibold">Upgrade</button>
           </div>
         </div>

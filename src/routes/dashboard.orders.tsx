@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
-import { orders } from "@/lib/mock-data";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 
 export const Route = createFileRoute("/dashboard/orders")({
   component: Orders,
@@ -16,9 +16,10 @@ const statusStyle: Record<string, string> = {
 };
 
 function Orders() {
+  const snapshot = useDashboardSnapshot();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"All" | "Completed" | "Pending" | "Cancelled">("All");
-  const filtered = orders.filter(o =>
+  const filtered = snapshot.orders.orders.filter(o =>
     (filter === "All" || o.status === filter) &&
     (o.id.toLowerCase().includes(q.toLowerCase()) || o.item.toLowerCase().includes(q.toLowerCase()))
   );

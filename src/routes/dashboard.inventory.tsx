@@ -3,16 +3,17 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
-import { products } from "@/lib/mock-data";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 
 export const Route = createFileRoute("/dashboard/inventory")({
   component: Inventory,
 });
 
 function Inventory() {
+  const snapshot = useDashboardSnapshot();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
-  const filtered = products.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
+  const filtered = snapshot.inventory.products.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <DashboardLayout title="Inventory" subtitle="Live stock across all menu items">

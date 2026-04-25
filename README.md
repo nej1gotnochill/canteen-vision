@@ -9,7 +9,23 @@ npm install
 npm run dev
 ```
 
-Default local URL: http://localhost:5173
+Default local URL: http://localhost:8080
+
+## API configuration
+
+Create `.env` from `.env.example` and set:
+
+```bash
+VITE_CANTEEN_API_URL=http://127.0.0.1:8000
+```
+
+If the backend is remote (Render/Railway/Fly.io/VPS), set this to the deployed API URL.
+
+## Deploy on Vercel
+
+Deploy this repository (`canteen-vision`) on Vercel.
+
+Set environment variable `VITE_CANTEEN_API_URL` in Vercel project settings to your deployed Python backend URL.
 
 ## Key links
 

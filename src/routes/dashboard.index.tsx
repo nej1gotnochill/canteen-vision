@@ -4,7 +4,7 @@ import { IndianRupee, ShoppingBag, AlertTriangle, Clock, TrendingUp } from "luci
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
 import { StatCard } from "@/components/canteen/StatCard";
-import { dailySales, topItems, hourlyDemand, wasteData } from "@/lib/mock-data";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Overview — ThaparCanteen Dashboard" }] }),
@@ -12,14 +12,16 @@ export const Route = createFileRoute("/dashboard/")({
 });
 
 function Overview() {
+  const snapshot = useDashboardSnapshot();
+
   return (
-    <DashboardLayout title="Welcome back, Aman 👋" subtitle="Here's how your canteen is performing today">
+    <DashboardLayout title="Welcome back, Aman 👋" subtitle={snapshot.source === "api" ? "Live data from the Thapar canteen model" : "Preview data while the backend starts"}>
       {/* Stat grid */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Today Revenue" value={18420} prefix="₹" icon={IndianRupee} change={12} variant="navy" delay={0} />
-        <StatCard label="Orders Completed" value={245} icon={ShoppingBag} change={8} variant="orange" delay={0.05} />
-        <StatCard label="Low Stock Alerts" value={3} icon={AlertTriangle} variant="light" delay={0.1} />
-        <StatCard label="Peak Hour Traffic" value={95} suffix="%" icon={Clock} change={-4} variant="light" delay={0.15} />
+        <StatCard label="Today Revenue" value={Math.round(snapshot.overview.todayRevenue)} prefix="₹" icon={IndianRupee} change={snapshot.overview.growth} variant="navy" delay={0} />
+        <StatCard label="Orders Completed" value={snapshot.overview.ordersCompleted} icon={ShoppingBag} change={8} variant="orange" delay={0.05} />
+        <StatCard label="Low Stock Alerts" value={snapshot.overview.lowStockAlerts} icon={AlertTriangle} variant="light" delay={0.1} />
+        <StatCard label="Peak Hour Traffic" value={snapshot.overview.peakTraffic} suffix="%" icon={Clock} change={-4} variant="light" delay={0.15} />
       </div>
 
       {/* Predicted card */}
@@ -37,8 +39,8 @@ function Overview() {
             <p className="text-white/70 text-sm">Based on 30-day patterns + tomorrow's class schedule</p>
           </div>
           <div className="text-right">
-            <p className="font-display text-4xl font-bold">₹21,800</p>
-            <p className="text-sm text-success">+18% expected ↑</p>
+            <p className="font-display text-4xl font-bold">₹{Math.round(snapshot.overview.predictedTomorrowSales).toLocaleString("en-IN")}</p>
+            <p className="text-sm text-success">+{snapshot.overview.growth}% expected ↑</p>
           </div>
         </div>
       </motion.div>
@@ -47,7 +49,7 @@ function Overview() {
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <ChartCard title="Daily Sales" subtitle="Last 7 days" className="lg:col-span-2">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={dailySales}>
+            <LineChart data={snapshot.analytics.dailySales}>
               <defs>
                 <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.5} />
@@ -66,14 +68,14 @@ function Overview() {
         <ChartCard title="Waste Breakdown" subtitle="This week">
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie data={wasteData} dataKey="value" innerRadius={55} outerRadius={90} paddingAngle={4}>
-                {wasteData.map((d, i) => <Cell key={i} fill={d.color} />)}
+              <Pie data={snapshot.analytics.wasteData} dataKey="value" innerRadius={55} outerRadius={90} paddingAngle={4}>
+                {snapshot.analytics.wasteData.map((d, i) => <Cell key={i} fill={d.color} />)}
               </Pie>
               <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
             </PieChart>
           </ResponsiveContainer>
           <div className="flex justify-center gap-4 -mt-2">
-            {wasteData.map(d => (
+            {snapshot.analytics.wasteData.map(d => (
               <div key={d.name} className="flex items-center gap-1.5 text-xs">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
                 <span className="text-muted-foreground">{d.name} {d.value}%</span>
@@ -86,7 +88,7 @@ function Overview() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <ChartCard title="Top Selling Items" subtitle="Today">
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={topItems}>
+            <BarChart data={snapshot.analytics.topItems}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={12} />
               <YAxis stroke="var(--muted-foreground)" fontSize={12} />
@@ -98,7 +100,7 @@ function Overview() {
 
         <ChartCard title="Hourly Demand Heatmap" subtitle="Today">
           <div className="grid grid-cols-8 gap-1.5 mt-2">
-            {hourlyDemand.map((h) => (
+            {snapshot.analytics.hourlyDemand.map((h) => (
               <div key={h.hour} className="flex flex-col items-center gap-1.5">
                 <div
                   className="w-full rounded-md transition-all hover:scale-110"

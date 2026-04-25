@@ -25,7 +25,15 @@ If the backend is remote (Render/Railway/Fly.io/VPS), set this to the deployed A
 
 Deploy this repository (`canteen-vision`) on Vercel.
 
+Use these project settings in Vercel:
+
+- Root Directory: `.`
+- Build Command: `npm run build`
+- Output Directory: `dist/client`
+
 Set environment variable `VITE_CANTEEN_API_URL` in Vercel project settings to your deployed Python backend URL.
+
+The included [vercel.json](vercel.json) keeps client-side routes working after deployment.
 
 ## Key links
 

@@ -88,7 +88,16 @@ export interface DashboardSnapshot {
   };
 }
 
-const API_BASE_URL = import.meta.env.VITE_CANTEEN_API_URL ?? "http://127.0.0.1:8000";
+const configuredApiBaseUrl = import.meta.env.VITE_CANTEEN_API_URL?.trim();
+const API_BASE_URL = configuredApiBaseUrl
+  ? configuredApiBaseUrl.replace(/\/+$/, "")
+  : import.meta.env.DEV
+    ? "http://127.0.0.1:8000"
+    : "";
+
+function toApiUrl(path: string): string {
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
 
 export function fallbackDashboardSnapshot(): DashboardSnapshot {
   return {
@@ -153,7 +162,7 @@ export function fallbackDashboardSnapshot(): DashboardSnapshot {
 }
 
 export async function fetchDashboardSnapshotFromApi(signal?: AbortSignal): Promise<DashboardSnapshot> {
-  const response = await fetch(`${API_BASE_URL}/api/dashboard`, { signal });
+  const response = await fetch(toApiUrl("/api/dashboard"), { signal });
   if (!response.ok) {
     throw new Error(`Dashboard API returned ${response.status}`);
   }
@@ -171,10 +180,13 @@ export async function fetchDashboardSnapshot(signal?: AbortSignal): Promise<Dash
 }
 
 export async function fetchPrediction(signal?: AbortSignal, temperature?: number) {
-  const url = new URL(`${API_BASE_URL}/api/predict`);
+  const params = new URLSearchParams();
   if (temperature !== undefined) {
-    url.searchParams.set("temperature", String(temperature));
+    params.set("temperature", String(temperature));
   }
+
+  const query = params.toString();
+  const url = `${toApiUrl("/api/predict")}${query ? `?${query}` : ""}`;
 
   try {
     const response = await fetch(url, { signal });

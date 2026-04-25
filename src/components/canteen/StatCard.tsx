@@ -17,7 +17,7 @@ export function StatCard({ label, value, prefix, suffix, icon: Icon, change, var
   const styles: Record<string, string> = {
     navy: "bg-gradient-navy text-white",
     orange: "bg-gradient-orange text-white",
-    light: "bg-card text-foreground",
+    light: "bg-card text-foreground border border-border",
     success: "bg-success text-success-foreground",
   };
   const isDark = variant === "navy" || variant === "orange" || variant === "success";

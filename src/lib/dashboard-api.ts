@@ -35,6 +35,14 @@ export interface PredictionCard {
   confidence: number;
 }
 
+export interface VisualizationAsset {
+  key: string;
+  title: string;
+  description: string;
+  filename: string;
+  imageUrl: string;
+}
+
 export interface DashboardSnapshot {
   source: "api" | "fallback";
   generatedAt: string;
@@ -86,6 +94,9 @@ export interface DashboardSnapshot {
     rmse: number;
     r2: number;
   };
+  visualizations: {
+    items: VisualizationAsset[];
+  };
 }
 
 const configuredApiBaseUrl = import.meta.env.VITE_CANTEEN_API_URL?.trim();
@@ -97,6 +108,53 @@ const API_BASE_URL = configuredApiBaseUrl
 
 function toApiUrl(path: string): string {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
+
+function getFallbackVisualizationAssets(): VisualizationAsset[] {
+  const base = [
+    {
+      key: "salesOverTime",
+      title: "Sales Over Time",
+      description: "Daily revenue trend with rolling average.",
+      filename: "sales_over_time.png",
+    },
+    {
+      key: "actualVsPredicted",
+      title: "Actual vs Predicted",
+      description: "Model fit against held-out test data.",
+      filename: "actual_vs_predicted.png",
+    },
+    {
+      key: "residuals",
+      title: "Residual Diagnostics",
+      description: "Error spread and residual behavior.",
+      filename: "residuals.png",
+    },
+    {
+      key: "featureImportances",
+      title: "Feature Importances",
+      description: "Relative influence of model features.",
+      filename: "feature_importances.png",
+    },
+  ];
+
+  return base.map((item) => ({
+    ...item,
+    imageUrl: toApiUrl(`/api/visualizations/${item.filename}`),
+  }));
+}
+
+function normalizeVisualizationAssets(
+  items: Array<{ key: string; title: string; description: string; filename: string }> | undefined,
+): VisualizationAsset[] {
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return getFallbackVisualizationAssets();
+  }
+
+  return items.map((item) => ({
+    ...item,
+    imageUrl: toApiUrl(`/api/visualizations/${item.filename}`),
+  }));
 }
 
 export function fallbackDashboardSnapshot(): DashboardSnapshot {
@@ -158,6 +216,9 @@ export function fallbackDashboardSnapshot(): DashboardSnapshot {
       rmse: 0,
       r2: 0,
     },
+    visualizations: {
+      items: getFallbackVisualizationAssets(),
+    },
   };
 }
 
@@ -167,8 +228,17 @@ export async function fetchDashboardSnapshotFromApi(signal?: AbortSignal): Promi
     throw new Error(`Dashboard API returned ${response.status}`);
   }
 
-  const snapshot = (await response.json()) as Omit<DashboardSnapshot, "source">;
-  return { ...snapshot, source: "api" };
+  const snapshot = (await response.json()) as Omit<DashboardSnapshot, "source" | "visualizations"> & {
+    visualizations?: { items?: Array<{ key: string; title: string; description: string; filename: string }> };
+  };
+
+  return {
+    ...snapshot,
+    source: "api",
+    visualizations: {
+      items: normalizeVisualizationAssets(snapshot.visualizations?.items),
+    },
+  };
 }
 
 export async function fetchDashboardSnapshot(signal?: AbortSignal): Promise<DashboardSnapshot> {

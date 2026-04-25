@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from "recharts";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
 import { StatCard } from "@/components/canteen/StatCard";
@@ -14,6 +15,8 @@ function Analytics() {
   const dailySales = snapshot.analytics.dailySales;
   const weeklyRevenue = dailySales.reduce((total, point) => total + point.sales, 0);
   const totalOrders = dailySales.reduce((total, point) => total + point.orders, 0);
+  const visualizationItems = snapshot.visualizations.items;
+  const [hiddenVisualizations, setHiddenVisualizations] = useState<Record<string, boolean>>({});
 
   return (
     <DashboardLayout title="Sales Analytics" subtitle="Deep insights across your canteen revenue">
@@ -54,6 +57,32 @@ function Analytics() {
             <Bar dataKey="orders" fill="var(--primary)" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="mt-4 rounded-2xl bg-card p-5 shadow-soft border border-border">
+        <h3 className="font-display font-bold mb-1">Model Visualizations</h3>
+        <p className="text-sm text-muted-foreground mb-4">Integrated backend plots for all four core model outputs.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {visualizationItems.map((viz) => (
+            <div key={viz.key} className="rounded-xl border border-border bg-background p-3">
+              <h4 className="font-semibold text-sm text-foreground">{viz.title}</h4>
+              <p className="text-xs text-muted-foreground mt-1 mb-2">{viz.description}</p>
+              {hiddenVisualizations[viz.key] ? (
+                <div className="h-48 rounded-lg border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground text-center px-4">
+                  Visualization unavailable. Confirm backend is running and `/api/visualizations/{viz.filename}` is reachable.
+                </div>
+              ) : (
+                <img
+                  src={viz.imageUrl}
+                  alt={viz.title}
+                  className="w-full h-48 object-contain rounded-lg bg-card"
+                  loading="lazy"
+                  onError={() => setHiddenVisualizations((prev) => ({ ...prev, [viz.key]: true }))}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </DashboardLayout>
   );

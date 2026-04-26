@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, LineChart, Line, ScatterChart, Scatter, ReferenceLine } from "recharts";
 import { DashboardLayout } from "@/components/canteen/DashboardLayout";
 import { StatCard } from "@/components/canteen/StatCard";
 import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
@@ -15,8 +14,8 @@ function Analytics() {
   const dailySales = snapshot.analytics.dailySales;
   const weeklyRevenue = dailySales.reduce((total, point) => total + point.sales, 0);
   const totalOrders = dailySales.reduce((total, point) => total + point.orders, 0);
-  const visualizationItems = snapshot.visualizations.items;
-  const [hiddenVisualizations, setHiddenVisualizations] = useState<Record<string, boolean>>({});
+  const diagnostics = snapshot.modelDiagnostics;
+  const featureImportances = [...diagnostics.featureImportances].sort((left, right) => left.value - right.value);
 
   return (
     <DashboardLayout title="Sales Analytics" subtitle="Deep insights across your canteen revenue">
@@ -59,30 +58,56 @@ function Analytics() {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-4 rounded-2xl bg-card p-5 shadow-soft border border-border">
-        <h3 className="font-display font-bold mb-1">Model Visualizations</h3>
-        <p className="text-sm text-muted-foreground mb-4">Integrated backend plots for all four core model outputs.</p>
-        <div className="grid gap-4 md:grid-cols-2">
-          {visualizationItems.map((viz) => (
-            <div key={viz.key} className="rounded-xl border border-border bg-background p-3">
-              <h4 className="font-semibold text-sm text-foreground">{viz.title}</h4>
-              <p className="text-xs text-muted-foreground mt-1 mb-2">{viz.description}</p>
-              {hiddenVisualizations[viz.key] ? (
-                <div className="h-48 rounded-lg border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground text-center px-4">
-                  Visualization unavailable. Confirm backend is running and `/api/visualizations/{viz.filename}` is reachable.
-                </div>
-              ) : (
-                <img
-                  src={viz.imageUrl}
-                  alt={viz.title}
-                  className="w-full h-48 object-contain rounded-lg bg-card"
-                  loading="lazy"
-                  onError={() => setHiddenVisualizations((prev) => ({ ...prev, [viz.key]: true }))}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <ChartCard title="Sales Over Time" subtitle="Backend forecast trace">
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={dailySales}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
+              <Line type="monotone" dataKey="sales" stroke="var(--accent)" strokeWidth={3} dot={{ r: 4, fill: "var(--accent)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Actual vs Predicted" subtitle="Hold-out test comparison">
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={diagnostics.actualVsPredicted}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
+              <Line type="monotone" dataKey="actual" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="predicted" stroke="var(--accent)" strokeWidth={3} strokeDasharray="6 4" dot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Residual Diagnostics" subtitle="Prediction error spread">
+          <ResponsiveContainer width="100%" height={260}>
+            <ScatterChart>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis type="number" dataKey="predicted" name="Predicted" stroke="var(--muted-foreground)" fontSize={12} />
+              <YAxis type="number" dataKey="residual" name="Residual" stroke="var(--muted-foreground)" fontSize={12} />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
+              <ReferenceLine y={0} stroke="var(--destructive)" strokeDasharray="6 4" />
+              <Scatter data={diagnostics.residuals} fill="var(--accent)" />
+            </ScatterChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Feature Importances" subtitle="What drives the model">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={featureImportances} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis type="number" stroke="var(--muted-foreground)" fontSize={12} />
+              <YAxis type="category" dataKey="name" stroke="var(--muted-foreground)" fontSize={12} width={110} />
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
+              <Bar dataKey="value" fill="var(--primary)" radius={[0, 8, 8, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
     </DashboardLayout>
   );

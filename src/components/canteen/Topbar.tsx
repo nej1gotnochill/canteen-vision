@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Bell, Check, Search } from "lucide-react";
+import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 
 type NotificationItem = {
   id: string;
@@ -10,7 +12,10 @@ type NotificationItem = {
 };
 
 export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
+  const snapshot = useDashboardSnapshot();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
       id: "n-1",
@@ -36,10 +41,43 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
   ]);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLDivElement | null>(null);
   const unreadCount = useMemo(
     () => notifications.reduce((count, item) => count + (item.unread ? 1 : 0), 0),
     [notifications],
   );
+
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return [];
+    }
+
+    const results: Array<{ label: string; detail: string; to: string }> = [];
+
+    snapshot.inventory.products
+      .filter((product) => product.name.toLowerCase().includes(query) || product.category.toLowerCase().includes(query))
+      .slice(0, 3)
+      .forEach((product) => {
+        results.push({ label: product.name, detail: `${product.category} • Stock ${product.stock}`, to: "/dashboard/inventory" });
+      });
+
+    snapshot.orders.orders
+      .filter((order) => order.id.toLowerCase().includes(query) || order.item.toLowerCase().includes(query))
+      .slice(0, 2)
+      .forEach((order) => {
+        results.push({ label: order.item, detail: `${order.id} • ${order.status}`, to: "/dashboard/orders" });
+      });
+
+    snapshot.predictions.cards
+      .filter((card) => card.item.toLowerCase().includes(query))
+      .slice(0, 2)
+      .forEach((card) => {
+        results.push({ label: card.item, detail: `Forecast ${card.forecast} units`, to: "/dashboard/predictions" });
+      });
+
+    return results.slice(0, 6);
+  }, [searchQuery, snapshot.inventory.products, snapshot.orders.orders, snapshot.predictions.cards]);
 
   useEffect(() => {
     if (!isNotificationsOpen) {
@@ -66,6 +104,31 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
     };
   }, [isNotificationsOpen]);
 
+  useEffect(() => {
+    if (!isSearchOpen) {
+      return;
+    }
+
+    function onPointerDown(event: MouseEvent) {
+      if (!searchRef.current?.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    }
+
+    window.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isSearchOpen]);
+
   function markAsRead(id: string) {
     setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, unread: false } : item)));
   }
@@ -81,9 +144,65 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
         {subtitle && <p className="text-xs lg:text-sm text-muted-foreground truncate">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-2 lg:gap-3">
-        <div className="hidden md:flex items-center gap-2 rounded-xl bg-secondary px-3 py-2 w-64">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input placeholder="Search items, orders…" className="bg-transparent text-sm outline-none flex-1 placeholder:text-muted-foreground" />
+        <div className="relative hidden md:block" ref={searchRef}>
+          <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2 w-64">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+                setIsSearchOpen(true);
+              }}
+              onFocus={() => setIsSearchOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && searchResults[0]) {
+                  setIsSearchOpen(false);
+                }
+              }}
+              placeholder="Search items, orders…"
+              className="bg-transparent text-sm outline-none flex-1 placeholder:text-muted-foreground"
+            />
+          </div>
+
+          {isSearchOpen && searchQuery.trim() && (
+            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-border bg-card shadow-card overflow-hidden z-40">
+              <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+                <p className="text-sm font-semibold text-foreground">Search results</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchOpen(false);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  searchResults.map((result) => (
+                    <Link
+                      key={`${result.to}-${result.label}`}
+                      to={result.to}
+                      onClick={() => {
+                        setIsSearchOpen(false);
+                        setSearchQuery("");
+                      }}
+                      className="block px-3 py-2.5 border-b last:border-b-0 border-border hover:bg-secondary/60 transition"
+                    >
+                      <p className="text-sm font-medium text-foreground">{result.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{result.detail}</p>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+                    No matches found.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <div className="relative" ref={panelRef}>
           <button

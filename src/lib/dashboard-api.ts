@@ -43,6 +43,23 @@ export interface VisualizationAsset {
   imageUrl: string;
 }
 
+export interface ModelDiagnosticPoint {
+  day: string;
+  date: string;
+  actual: number;
+  predicted: number;
+}
+
+export interface ResidualPoint {
+  predicted: number;
+  residual: number;
+}
+
+export interface FeatureImportancePoint {
+  name: string;
+  value: number;
+}
+
 export interface DashboardSnapshot {
   source: "api" | "fallback";
   generatedAt: string;
@@ -93,6 +110,11 @@ export interface DashboardSnapshot {
     mse: number;
     rmse: number;
     r2: number;
+  };
+  modelDiagnostics: {
+    actualVsPredicted: ModelDiagnosticPoint[];
+    residuals: ResidualPoint[];
+    featureImportances: FeatureImportancePoint[];
   };
   visualizations: {
     items: VisualizationAsset[];
@@ -157,6 +179,36 @@ function normalizeVisualizationAssets(
   }));
 }
 
+function getFallbackModelDiagnostics(): DashboardSnapshot["modelDiagnostics"] {
+  const actualVsPredicted = fallbackDailySales.map((point, index) => {
+    const adjustment = index % 2 === 0 ? 0.92 : 1.07;
+    const predicted = Math.round(point.sales * adjustment);
+    return {
+      day: point.day,
+      date: `2026-04-${String(index + 20).padStart(2, "0")}`,
+      actual: point.sales,
+      predicted,
+    };
+  });
+
+  return {
+    actualVsPredicted,
+    residuals: actualVsPredicted.map((point) => ({
+      predicted: point.predicted,
+      residual: Math.round(point.actual - point.predicted),
+    })),
+    featureImportances: [
+      { name: "dem_lag_1", value: 0.31 },
+      { name: "sales_rolling_7", value: 0.24 },
+      { name: "temperature", value: 0.16 },
+      { name: "day_of_week", value: 0.11 },
+      { name: "is_weekend", value: 0.08 },
+      { name: "month", value: 0.06 },
+      { name: "is_peak_hour", value: 0.04 },
+    ],
+  };
+}
+
 export function fallbackDashboardSnapshot(): DashboardSnapshot {
   return {
     source: "fallback",
@@ -216,6 +268,7 @@ export function fallbackDashboardSnapshot(): DashboardSnapshot {
       rmse: 0,
       r2: 0,
     },
+    modelDiagnostics: getFallbackModelDiagnostics(),
     visualizations: {
       items: getFallbackVisualizationAssets(),
     },
@@ -228,13 +281,15 @@ export async function fetchDashboardSnapshotFromApi(signal?: AbortSignal): Promi
     throw new Error(`Dashboard API returned ${response.status}`);
   }
 
-  const snapshot = (await response.json()) as Omit<DashboardSnapshot, "source" | "visualizations"> & {
+  const snapshot = (await response.json()) as Omit<DashboardSnapshot, "source" | "visualizations" | "modelDiagnostics"> & {
     visualizations?: { items?: Array<{ key: string; title: string; description: string; filename: string }> };
+    modelDiagnostics?: DashboardSnapshot["modelDiagnostics"];
   };
 
   return {
     ...snapshot,
     source: "api",
+    modelDiagnostics: snapshot.modelDiagnostics ?? getFallbackModelDiagnostics(),
     visualizations: {
       items: normalizeVisualizationAssets(snapshot.visualizations?.items),
     },

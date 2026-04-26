@@ -39,7 +39,7 @@ export function StatCard({ label, value, prefix, suffix, icon: Icon, change, var
             <AnimatedCounter value={value} prefix={prefix} suffix={suffix} />
           </p>
           {change !== undefined && (
-            <div className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold ${isDark ? "text-white/90" : change >= 0 ? "text-success" : "text-destructive"}`}>
+            <div className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${isDark ? "glass-pill text-white" : change >= 0 ? "glass-pill text-success" : "bg-destructive/10 text-destructive"}`}>
               {change >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
               {change >= 0 ? "+" : ""}{change}% vs yesterday
             </div>

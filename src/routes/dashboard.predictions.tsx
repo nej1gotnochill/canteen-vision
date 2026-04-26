@@ -43,7 +43,7 @@ function Predictions() {
           >
             <div className="flex items-start justify-between">
               <div className="text-4xl">{p.emoji}</div>
-              <div className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold ${p.change >= 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+              <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${p.change >= 0 ? "glass-pill text-success" : "bg-destructive/10 text-destructive"}`}>
                 {p.change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                 {p.change >= 0 ? "+" : ""}{p.change}%
               </div>

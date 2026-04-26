@@ -13,6 +13,10 @@ export const Route = createFileRoute("/dashboard/")({
 
 function Overview() {
   const snapshot = useDashboardSnapshot();
+  const peakHour = snapshot.analytics.hourlyDemand.reduce(
+    (best, hour) => (hour.value > best.value ? hour : best),
+    snapshot.analytics.hourlyDemand[0],
+  );
 
   return (
     <DashboardLayout title="Welcome back, Aman 👋" subtitle={snapshot.source === "api" ? "Live data from the Thapar canteen model" : "Preview data while the backend starts"}>
@@ -21,7 +25,7 @@ function Overview() {
         <StatCard label="Today Revenue" value={Math.round(snapshot.overview.todayRevenue)} prefix="₹" icon={IndianRupee} change={snapshot.overview.growth} variant="navy" delay={0} />
         <StatCard label="Orders Completed" value={snapshot.overview.ordersCompleted} icon={ShoppingBag} change={8} variant="orange" delay={0.05} />
         <StatCard label="Low Stock Alerts" value={snapshot.overview.lowStockAlerts} icon={AlertTriangle} variant="light" delay={0.1} />
-        <StatCard label="Peak Hour Traffic" value={snapshot.overview.peakTraffic} suffix="%" icon={Clock} change={-4} variant="light" delay={0.15} />
+        <StatCard label="Peak Hour Traffic" value={snapshot.overview.peakTraffic} suffix="%" icon={Clock} variant="light" delay={0.15} />
       </div>
 
       {/* Predicted card */}
@@ -40,7 +44,10 @@ function Overview() {
           </div>
           <div className="text-right">
             <p className="font-display text-4xl font-bold">₹{Math.round(snapshot.overview.predictedTomorrowSales).toLocaleString("en-IN")}</p>
-            <p className="text-sm text-success">+{snapshot.overview.growth}% expected ↑</p>
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full glass-pill px-3 py-1 text-sm font-semibold text-success">
+              <TrendingUp className="h-3.5 w-3.5" />
+              +{snapshot.overview.growth}% expected ↑
+            </div>
           </div>
         </div>
       </motion.div>
@@ -111,7 +118,7 @@ function Overview() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-4">🔥 Peak rush at <span className="font-semibold text-foreground">12 PM</span> with 95% capacity.</p>
+          <p className="text-xs text-muted-foreground mt-4">🔥 Peak rush at <span className="font-semibold text-foreground">{peakHour.hour}</span> with {snapshot.overview.peakTraffic}% capacity.</p>
         </ChartCard>
       </div>
     </DashboardLayout>

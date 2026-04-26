@@ -148,5 +148,12 @@
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid color-mix(in oklab, white 18%, transparent);
   }
+  .glass-pill {
+    background: color-mix(in oklab, white 18%, transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid color-mix(in oklab, white 24%, transparent);
+    box-shadow: 0 8px 24px -14px color-mix(in oklab, black 28%, transparent);
+  }
   .text-balance { text-wrap: balance; }
 }

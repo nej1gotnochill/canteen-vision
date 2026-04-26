@@ -252,6 +252,61 @@ function normalizePredictions(
   };
 }
 
+function normalizeModelDiagnostics(
+  diagnostics: Partial<DashboardSnapshot["modelDiagnostics"]> | undefined,
+  fallback: DashboardSnapshot["modelDiagnostics"],
+): DashboardSnapshot["modelDiagnostics"] {
+  const rawActualVsPredicted = Array.isArray((diagnostics as { actualVsPredicted?: unknown[] } | undefined)?.actualVsPredicted)
+    ? ((diagnostics as { actualVsPredicted?: unknown[] }).actualVsPredicted ?? [])
+    : [];
+  const actualVsPredicted = rawActualVsPredicted
+    .filter((point) => Boolean(point && typeof point === "object"))
+    .map((point, index) => {
+      const safePoint = point as Partial<ModelDiagnosticPoint>;
+      const fallbackPoint = fallback.actualVsPredicted[index % fallback.actualVsPredicted.length];
+      return {
+        day: typeof safePoint.day === "string" ? safePoint.day : fallbackPoint.day,
+        date: typeof safePoint.date === "string" ? safePoint.date : fallbackPoint.date,
+        actual: Number.isFinite(safePoint.actual) ? Number(safePoint.actual) : fallbackPoint.actual,
+        predicted: Number.isFinite(safePoint.predicted) ? Number(safePoint.predicted) : fallbackPoint.predicted,
+      };
+    });
+
+  const rawResiduals = Array.isArray((diagnostics as { residuals?: unknown[] } | undefined)?.residuals)
+    ? ((diagnostics as { residuals?: unknown[] }).residuals ?? [])
+    : [];
+  const residuals = rawResiduals
+    .filter((point) => Boolean(point && typeof point === "object"))
+    .map((point, index) => {
+      const safePoint = point as Partial<ResidualPoint>;
+      const fallbackPoint = fallback.residuals[index % fallback.residuals.length];
+      return {
+        predicted: Number.isFinite(safePoint.predicted) ? Number(safePoint.predicted) : fallbackPoint.predicted,
+        residual: Number.isFinite(safePoint.residual) ? Number(safePoint.residual) : fallbackPoint.residual,
+      };
+    });
+
+  const rawFeatureImportances = Array.isArray((diagnostics as { featureImportances?: unknown[] } | undefined)?.featureImportances)
+    ? ((diagnostics as { featureImportances?: unknown[] }).featureImportances ?? [])
+    : [];
+  const featureImportances = rawFeatureImportances
+    .filter((point) => Boolean(point && typeof point === "object"))
+    .map((point, index) => {
+      const safePoint = point as Partial<FeatureImportancePoint>;
+      const fallbackPoint = fallback.featureImportances[index % fallback.featureImportances.length];
+      return {
+        name: typeof safePoint.name === "string" ? safePoint.name : fallbackPoint.name,
+        value: Number.isFinite(safePoint.value) ? Number(safePoint.value) : fallbackPoint.value,
+      };
+    });
+
+  return {
+    actualVsPredicted: actualVsPredicted.length > 0 ? actualVsPredicted : fallback.actualVsPredicted,
+    residuals: residuals.length > 0 ? residuals : fallback.residuals,
+    featureImportances: featureImportances.length > 0 ? featureImportances : fallback.featureImportances,
+  };
+}
+
 export function fallbackDashboardSnapshot(): DashboardSnapshot {
   return {
     source: "fallback",
@@ -360,7 +415,7 @@ export async function fetchDashboardSnapshotFromApi(signal?: AbortSignal): Promi
       ...(snapshot.model ?? {}),
       r2: Number.isFinite(snapshot.model?.r2) ? Number(snapshot.model?.r2) : fallback.model.r2,
     },
-    modelDiagnostics: snapshot.modelDiagnostics ?? fallback.modelDiagnostics,
+    modelDiagnostics: normalizeModelDiagnostics(snapshot.modelDiagnostics, fallback.modelDiagnostics),
     visualizations: {
       items: normalizeVisualizationAssets(snapshot.visualizations?.items),
     },

@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/canteen/DashboardLayout";
 import { StatCard } from "@/components/canteen/StatCard";
 import { useDashboardSnapshot } from "@/hooks/useDashboardSnapshot";
 import { IndianRupee, ShoppingBag, TrendingUp, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const Route = createFileRoute("/dashboard/analytics")({
   component: Analytics,
@@ -11,11 +12,19 @@ export const Route = createFileRoute("/dashboard/analytics")({
 
 function Analytics() {
   const snapshot = useDashboardSnapshot();
-  const dailySales = snapshot.analytics.dailySales;
+  const dailySales = Array.isArray(snapshot.analytics?.dailySales) ? snapshot.analytics.dailySales : [];
   const weeklyRevenue = dailySales.reduce((total, point) => total + point.sales, 0);
   const totalOrders = dailySales.reduce((total, point) => total + point.orders, 0);
-  const diagnostics = snapshot.modelDiagnostics;
-  const featureImportances = [...diagnostics.featureImportances].sort((left, right) => left.value - right.value);
+  const diagnostics = snapshot.modelDiagnostics ?? {
+    actualVsPredicted: [],
+    residuals: [],
+    featureImportances: [],
+  };
+  const actualVsPredicted = Array.isArray(diagnostics.actualVsPredicted) ? diagnostics.actualVsPredicted : [];
+  const residuals = Array.isArray(diagnostics.residuals) ? diagnostics.residuals : [];
+  const featureImportances = (Array.isArray(diagnostics.featureImportances) ? diagnostics.featureImportances : [])
+    .slice()
+    .sort((left, right) => left.value - right.value);
 
   return (
     <DashboardLayout title="Sales Analytics" subtitle="Deep insights across your canteen revenue">
@@ -73,7 +82,7 @@ function Analytics() {
 
         <ChartCard title="Actual vs Predicted" subtitle="Hold-out test comparison">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={diagnostics.actualVsPredicted}>
+            <LineChart data={actualVsPredicted}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} />
               <YAxis stroke="var(--muted-foreground)" fontSize={12} />
@@ -92,7 +101,7 @@ function Analytics() {
               <YAxis type="number" dataKey="residual" name="Residual" stroke="var(--muted-foreground)" fontSize={12} />
               <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }} />
               <ReferenceLine y={0} stroke="var(--destructive)" strokeDasharray="6 4" />
-              <Scatter data={diagnostics.residuals} fill="var(--accent)" />
+              <Scatter data={residuals} fill="var(--accent)" />
             </ScatterChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -110,5 +119,19 @@ function Analytics() {
         </ChartCard>
       </div>
     </DashboardLayout>
+  );
+}
+
+function ChartCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl bg-card p-5 shadow-soft border border-border"
+    >
+      <h3 className="font-display font-bold mb-1">{title}</h3>
+      <p className="text-xs text-muted-foreground mb-4">{subtitle}</p>
+      {children}
+    </motion.div>
   );
 }

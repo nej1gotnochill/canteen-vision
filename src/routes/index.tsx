@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, Brain, Leaf, Package, LineChart, Sparkles, Star, Zap, ShieldCheck } from "lucide-react";
+import { ArrowRight, Brain, Leaf, Package, LineChart, Sparkles, Star, Zap, ShieldCheck, Linkedin, Mail, ExternalLink } from "lucide-react";
 import { Logo } from "@/components/canteen/Logo";
 import { testimonials } from "@/lib/mock-data";
 
@@ -21,6 +21,27 @@ const features = [
   { icon: Leaf, title: "Waste Reduction", desc: "Cut food waste by up to 40% with AI consumption tracking.", color: "bg-gradient-orange text-white" },
   { icon: Package, title: "Smart Inventory", desc: "Auto-reorder Patties, Cold Coffee & more, exactly when needed.", color: "bg-card text-foreground" },
   { icon: LineChart, title: "Revenue Insights", desc: "Hourly heatmaps reveal hidden goldmines in your menu.", color: "bg-card text-foreground" },
+];
+
+const founders = [
+  {
+    name: "Divyansh Lalotra",
+    email: "dlalotra_be25@thapar.edu",
+    linkedin: "https://www.linkedin.com/in/divyansh-lalotra-89145137a/?skipRedirect=true",
+    initials: "DL",
+  },
+  {
+    name: "Hardhavan Singh",
+    email: "shardhavan@gmail.com",
+    linkedin: "https://www.linkedin.com/in/hardhavan-singh/",
+    initials: "HS",
+  },
+  {
+    name: "Aryan Verma",
+    email: "averma8_be25@thapar.edu",
+    linkedin: null,
+    initials: "AV",
+  },
 ];
 
 function Landing() {
@@ -65,11 +86,11 @@ function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-2xl bg-gradient-orange px-6 py-3.5 text-sm font-semibold text-white shadow-glow hover:scale-[1.02] transition">
-                View Dashboard <ArrowRight className="h-4 w-4" />
+                Open Dashboard <ArrowRight className="h-4 w-4" />
               </Link>
-              <button className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary-glow transition">
-                Start Free Trial <Zap className="h-4 w-4" />
-              </button>
+              <a href="#founders" className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary-glow transition">
+                Talk to founder <Zap className="h-4 w-4" />
+              </a>
             </div>
             <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-success" /> Used by 12+ campus canteens</div>
@@ -123,6 +144,68 @@ function Landing() {
               <h3 className="mt-5 font-display text-xl font-bold">{f.title}</h3>
               <p className="mt-2 text-sm opacity-80">{f.desc}</p>
             </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Founders */}
+      <section id="founders" className="mx-auto max-w-7xl px-4 lg:px-8 py-24">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent">Founders</p>
+          <h2 className="mt-3 font-display text-3xl md:text-5xl font-bold text-balance">Built by a small team with one canteen goal.</h2>
+          <p className="mt-4 text-muted-foreground">
+            Reach out to the founders directly through LinkedIn or email.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+          {founders.map((founder, index) => (
+            <motion.article
+              key={founder.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.08 }}
+              className="rounded-3xl border border-border bg-card p-6 shadow-soft"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-orange text-sm font-bold text-white shadow-glow">
+                  {founder.initials}
+                </div>
+                <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success glass-pill">
+                  Founder
+                </span>
+              </div>
+
+              <h3 className="mt-5 font-display text-2xl font-bold text-foreground">{founder.name}</h3>
+              <div className="mt-4 space-y-3 text-sm">
+                <a
+                  href={`mailto:${founder.email}`}
+                  className="flex items-center gap-2 rounded-2xl border border-border bg-background px-3 py-2 text-foreground transition hover:border-accent/40 hover:bg-accent/5"
+                >
+                  <Mail className="h-4 w-4 text-accent" />
+                  <span className="truncate">{founder.email}</span>
+                </a>
+
+                {founder.linkedin ? (
+                  <a
+                    href={founder.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 rounded-2xl border border-border bg-background px-3 py-2 text-foreground transition hover:border-accent/40 hover:bg-accent/5"
+                  >
+                    <Linkedin className="h-4 w-4 text-accent" />
+                    <span className="truncate">LinkedIn Profile</span>
+                    <ExternalLink className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-background px-3 py-2 text-sm text-muted-foreground">
+                    <Linkedin className="h-4 w-4" />
+                    No LinkedIn provided
+                  </div>
+                )}
+              </div>
+            </motion.article>
           ))}
         </div>
       </section>

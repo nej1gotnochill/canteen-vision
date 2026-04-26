@@ -209,6 +209,49 @@ function getFallbackModelDiagnostics(): DashboardSnapshot["modelDiagnostics"] {
   };
 }
 
+function normalizePredictions(
+  predictions: Partial<DashboardSnapshot["predictions"]> | undefined,
+  fallback: DashboardSnapshot["predictions"],
+): DashboardSnapshot["predictions"] {
+  const rawCards = Array.isArray((predictions as { cards?: unknown[] } | undefined)?.cards)
+    ? ((predictions as { cards?: unknown[] }).cards ?? [])
+    : [];
+  const cards = rawCards
+    .filter((card) => Boolean(card && typeof card === "object"))
+    .map((card, index) => {
+          const safeCard = card as Partial<PredictionCard>;
+          const fallbackCard = fallback.cards[index % fallback.cards.length];
+          return {
+            item: typeof safeCard.item === "string" ? safeCard.item : fallbackCard.item,
+            emoji: typeof safeCard.emoji === "string" ? safeCard.emoji : fallbackCard.emoji,
+            forecast: Number.isFinite(safeCard.forecast) ? Number(safeCard.forecast) : fallbackCard.forecast,
+            change: Number.isFinite(safeCard.change) ? Number(safeCard.change) : fallbackCard.change,
+            confidence: Number.isFinite(safeCard.confidence) ? Number(safeCard.confidence) : fallbackCard.confidence,
+          };
+        });
+
+  const rawTrend = Array.isArray((predictions as { trend?: unknown[] } | undefined)?.trend)
+    ? ((predictions as { trend?: unknown[] }).trend ?? [])
+    : [];
+  const trend = rawTrend
+    .filter((point) => Boolean(point && typeof point === "object"))
+    .map((point, index) => {
+          const safePoint = point as Partial<DailySalesPoint>;
+          const fallbackPoint = fallback.trend[index % fallback.trend.length];
+          return {
+            day: typeof safePoint.day === "string" ? safePoint.day : fallbackPoint.day,
+            sales: Number.isFinite(safePoint.sales) ? Number(safePoint.sales) : fallbackPoint.sales,
+            orders: Number.isFinite(safePoint.orders) ? Number(safePoint.orders) : fallbackPoint.orders,
+          };
+        });
+
+  return {
+    headline: typeof predictions?.headline === "string" ? predictions.headline : fallback.headline,
+    cards: cards.length > 0 ? cards : fallback.cards,
+    trend: trend.length > 0 ? trend : fallback.trend,
+  };
+}
+
 export function fallbackDashboardSnapshot(): DashboardSnapshot {
   return {
     source: "fallback",
@@ -281,15 +324,43 @@ export async function fetchDashboardSnapshotFromApi(signal?: AbortSignal): Promi
     throw new Error(`Dashboard API returned ${response.status}`);
   }
 
+  const fallback = fallbackDashboardSnapshot();
+
   const snapshot = (await response.json()) as Omit<DashboardSnapshot, "source" | "visualizations" | "modelDiagnostics"> & {
     visualizations?: { items?: Array<{ key: string; title: string; description: string; filename: string }> };
     modelDiagnostics?: DashboardSnapshot["modelDiagnostics"];
   };
 
   return {
-    ...snapshot,
     source: "api",
-    modelDiagnostics: snapshot.modelDiagnostics ?? getFallbackModelDiagnostics(),
+    generatedAt: typeof snapshot.generatedAt === "string" ? snapshot.generatedAt : fallback.generatedAt,
+    overview: { ...fallback.overview, ...(snapshot.overview ?? {}) },
+    analytics: {
+      dailySales: Array.isArray(snapshot.analytics?.dailySales) ? snapshot.analytics.dailySales : fallback.analytics.dailySales,
+      topItems: Array.isArray(snapshot.analytics?.topItems) ? snapshot.analytics.topItems : fallback.analytics.topItems,
+      hourlyDemand: Array.isArray(snapshot.analytics?.hourlyDemand) ? snapshot.analytics.hourlyDemand : fallback.analytics.hourlyDemand,
+      wasteData: Array.isArray(snapshot.analytics?.wasteData) ? snapshot.analytics.wasteData : fallback.analytics.wasteData,
+    },
+    inventory: {
+      products: Array.isArray(snapshot.inventory?.products) ? snapshot.inventory.products : fallback.inventory.products,
+    },
+    predictions: normalizePredictions(snapshot.predictions, fallback.predictions),
+    waste: {
+      summary: { ...fallback.waste.summary, ...(snapshot.waste?.summary ?? {}) },
+      weeklyWaste: Array.isArray(snapshot.waste?.weeklyWaste) ? snapshot.waste.weeklyWaste : fallback.waste.weeklyWaste,
+      wastedItems: Array.isArray(snapshot.waste?.wastedItems) ? snapshot.waste.wastedItems : fallback.waste.wastedItems,
+      tips: Array.isArray(snapshot.waste?.tips) ? snapshot.waste.tips : fallback.waste.tips,
+    },
+    orders: {
+      orders: Array.isArray(snapshot.orders?.orders) ? snapshot.orders.orders : fallback.orders.orders,
+    },
+    settings: { ...fallback.settings, ...(snapshot.settings ?? {}) },
+    model: {
+      ...fallback.model,
+      ...(snapshot.model ?? {}),
+      r2: Number.isFinite(snapshot.model?.r2) ? Number(snapshot.model?.r2) : fallback.model.r2,
+    },
+    modelDiagnostics: snapshot.modelDiagnostics ?? fallback.modelDiagnostics,
     visualizations: {
       items: normalizeVisualizationAssets(snapshot.visualizations?.items),
     },
